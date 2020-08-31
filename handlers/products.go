@@ -1,8 +1,10 @@
 package handlers
 
 import (
-	"github.com/yashanshu/product-api/data"
+	"log"
 	"net/http"
+
+	"github.com/yashanshu/product-api/data"
 )
 
 // Product is a http.Handler
@@ -17,10 +19,14 @@ func NewProducts(l *log.Logger) *Products {
 
 // ServeHTTP is the main entry point for the handler and satisfies the
 // http.Handler interface
-func (p *Products) ServeHTTP(rw http.ResponseWriter. r *http.Request) {
+func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// handle the request for a list of products
 	if r.Method == http.MethodGet {
 		p.getProducts(rw, r)
+		return
+	}
+	if r.Method == http.MethodPost {
+		p.addProducts(rw, r)
 		return
 	}
 	// catch all
@@ -29,10 +35,10 @@ func (p *Products) ServeHTTP(rw http.ResponseWriter. r *http.Request) {
 }
 
 // getProducts returns the products from the data store
-func (p *Products) getProducts(rw http.ResponseWriter. r *http.Request) {
+func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
 
-	// feth the products from the data store
+	// fetch the products from the data store
 	lp := data.GetProducts()
 
 	// serialize the list to JSON
@@ -40,4 +46,19 @@ func (p *Products) getProducts(rw http.ResponseWriter. r *http.Request) {
 	if err != nil {
 		http.Error(rw, "Unable to marshal JSON", http.StatusInternalServerError)
 	}
+}
+
+func (p *Products) addProducts(rw http.ResponseWriter, r *http.Request) {
+	p.l.Println("Handle GET Products")
+
+	// get the product from request and serialize it
+	prod := &data.Product{}
+
+	err := prod.FromJSON(r.Body)
+	if err != nil {
+		http.Error(rw, "Unable to unmarshal JSON", http.StatusBadRequest)
+	}
+
+	data.AddProduct(prod)
+
 }
